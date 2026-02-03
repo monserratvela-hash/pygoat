@@ -255,9 +255,11 @@ def xxe_see(request):
 @csrf_exempt
 def xxe_parse(request):
 
-    parser = make_parser()
-    parser.setFeature(feature_external_ges, True)
-    doc = parseString(request.body.decode('utf-8'), parser=parser)
+    parser = etree.XMLParser(resolve_entities=False,no_network=True)
+    doc = etree.fromstring(xml_data, parser)
+    #Remediacion CWE 20 parser = make_parser()
+    #parser.setFeature(feature_external_ges, True)
+    #doc = parseString(request.body.decode('utf-8'), parser=parser)
     for event, node in doc:
         if event == START_ELEMENT and node.tagName == 'text':
             doc.expandNode(node)
@@ -960,7 +962,8 @@ def ssrf_lab2(request):
     elif request.method == "POST":
         url = request.POST["url"]
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=(3,5))
+            #Remediacion CWE400 response = requests.get(url)
             return render(request, "Lab/ssrf/ssrf_lab2.html", {"response": response.content.decode()})
         except:
             return render(request, "Lab/ssrf/ssrf_lab2.html", {"error": "Invalid URL"})
@@ -1023,7 +1026,8 @@ def crypto_failure_lab(request):
             username = request.POST["username"]
             password = request.POST["password"]
             try:
-                password = md5(password.encode()).hexdigest()
+                bcrypt.checkpw(password.encode(),hashed)
+                # Remediacion CWE 327 password = md5(password.encode()).hexdigest()
                 user = CF_user.objects.filter(username=username,password=password).first()
                 return render(request,"Lab_2021/A2_Crypto_failur/crypto_failure_lab.html",{"user":user, "success":True,"failure":False})
             except Exception as e:
